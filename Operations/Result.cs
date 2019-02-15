@@ -62,6 +62,11 @@ namespace Operations
             return new Result<T>(result);
         }
 
+        public static IResult<T> Success<T>(IResult<T> result)
+        {
+            return new Result<T>(result.Value);
+        }
+
         public static IVoidResult Success()
         {
             return new Result();

@@ -84,13 +84,13 @@ namespace Operations
 
         public static IObservable<T> Log<T>(this IObservable<T> source, Action<Exception> handler)
         {
-            return source.Do(_ => { }, handler);
+            return source.Do(_ => { }, onError: handler);
         }
 
         public static IObservable<T> Log<T, TException>(this IObservable<T> source, Action<TException> handler)
             where TException : Exception
         {
-            return source.Do(_ => { }, (Exception e) => { if (e is TException exception) handler(exception); });
+            return source.Do(_ => { }, onError: (Exception e) => { if (e is TException exception) handler(exception); });
         }
     }
 }

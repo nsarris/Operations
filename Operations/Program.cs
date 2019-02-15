@@ -135,6 +135,7 @@ namespace ConsoleApp12
             return repo
                 .CreateNewOperation()
                 .WithConsoleLogAndTrace("Business CreateNewCustomer")
+                .Log((InvalidOperationException e) => { Console.WriteLine("Custom business log"); })
                 .ContinueWith(x =>
                 {
                     x.Name = name;
@@ -158,12 +159,21 @@ namespace ConsoleApp12
             return repo
                 .CreateNewResult()
                 .WithConsoleLogAndTrace("Business CreateNewCustomer")
+                .Log((InvalidOperationException e) => { Console.WriteLine("Custom business log"); })
                 .ContinueWith(x =>
                 {
                     x.Value.Name = name;
                 })
                 .ContinueWith(repo.SaveAsync)
                 .ContinueWith(repo.ProjectAsync)
+                .ContinueWith(x =>
+                {
+                    if (DateTime.IsLeapYear(2001))
+                        return Result.Success(x);
+                    else
+                        throw new InvalidOperationException();
+                })
+                
                 //.Catch((Exception e) =>
                 //{
                 //    Console.WriteLine("Exception caught and handled at business level: " + e.Message);
@@ -216,7 +226,7 @@ namespace ConsoleApp12
             return await service
                 .CreateNewCustomerOperation(name)
                 .WithConsoleLogAndTrace("Application CreateNewCustomer")
-                .Log((InvalidOperationException e) => { })
+                .Log((InvalidOperationException e) => { Console.WriteLine("Custom application log"); })
                 //.Catch((Exception e) =>
                 //{
                 //    Console.WriteLine("Exception caught and handled  at application level: " + e.Message);
@@ -238,7 +248,7 @@ namespace ConsoleApp12
                 await service
                 .CreateNewCustomerResult(name)
                 .WithConsoleLogAndTrace("Application CreateNewCustomer")
-                .Log((InvalidOperationException e) => { })
+                .Log((InvalidOperationException e) => { Console.WriteLine("Custom application log"); })
                 //.Catch((Exception e) =>
                 //{
                 //    Console.WriteLine("Exception caught and handled  at application level: " + e.Message);

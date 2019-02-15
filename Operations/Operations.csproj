@@ -10,4 +10,23 @@
     <PackageReference Include="system.reactive" Version="4.1.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="OperationConcatenator.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>OperationConcatenator.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="OperationConcatenator.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>OperationConcatenator.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
 </Project>

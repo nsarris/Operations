@@ -4,7 +4,7 @@ using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ConsoleApp12
+namespace Operations
 {
     public static class OperationExtensions
     {
@@ -13,6 +13,11 @@ namespace ConsoleApp12
             return new Operation<T>(opeartion.AsObservable().Do(
                 onNext: x => Console.WriteLine($"[TRACE]{tag}, Value = {x}"),
                 onError: ex => Console.WriteLine($"[LOG]{tag}, Exception = {ex.Message}")));
+        }
+
+        public static OperationConcatenator<T1, T2> And<T1, T2>(this IOperation<T1> source, IOperation<T2> operation)
+        {
+            return new OperationConcatenator<T1, T2>(source, operation);
         }
 
         public static IOperation<TResult> Select<TSource, TResult>(this IOperation<TSource> source, Func<TSource, int, TResult> selector)
@@ -85,6 +90,29 @@ namespace ConsoleApp12
             return new Operation<TResult>(source.AsObservable().SelectMany(selector));
         }
 
+
+
+
+        #region Result continuations
+
+        public static IOperation<IResult<T>> ContinueWith<T>(this IOperation<IResult<T>> source, Action<T> selector)
+        {
+            return new Operation<IResult<T>>(source.AsObservable().Tap(x => Operation.CreateResult(selector, x.Value)));
+        }
+
+        public static IOperation<IResult<T>> ContinueWith<T>(this IOperation<IResult<T>> source, Func<T, Task> selector)
+        {
+            return new Operation<IResult<T>>(source.AsObservable().Tap(x => Operation.CreateResult(selector, x.Value)));
+        }
+
+        public static IOperation<IResult<TResult>> Select<TSource, TResult>(this IOperation<IResult<TSource>> source, Func<TSource, TResult> selector)
+        {
+            return new Operation<IResult<TResult>>(source.AsObservable().Select(x => Result.FromInvocation(() => selector(x.Value))));
+        }
+
+        #endregion
+
+
         public static IOperation<T> Trace<T>(this IOperation<T> source, Action<T> handler)
         {
             return new Operation<T>(source.AsObservable().Do(handler));
@@ -119,11 +147,6 @@ namespace ConsoleApp12
         {
             return new Operation<TSource>(source.AsObservable().Catch(handler));
         }
-
-        //public static Pattern<TLeft, TRight> And<TLeft, TRight>(this IObservable<TLeft> left, IObservable<TRight> right)
-        //{
-        //    left.And(right).And(right).And(right)
-        //}
 
         public static Task<T> ExecuteAsync<T>(this IOperation<T> operation)
         {

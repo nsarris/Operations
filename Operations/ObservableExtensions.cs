@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ConsoleApp12
+namespace Operations
 {
     public static class ObservableExtensions
     {
@@ -24,6 +26,17 @@ namespace ConsoleApp12
             return source.Select((x) => { selector(x); return x; });
         }
 
+        //Only if parallel?
+        //public static IObservable<T> Tap<T>(this IObservable<T> source, IEnumerable<Action<T, int>> selectors)
+        //{
+        //    return source.Select((x, i) => { selector(x, i); return x; });
+        //}
+
+        //public static IObservable<T> Tap<T>(this IObservable<T> source, IEnumerable<Action<T>> selector)
+        //{
+        //    return source.Select((x) => { selector(x); return x; });
+        //}
+
         public static IObservable<TSource> Tap<TSource>(this IObservable<TSource> source, Func<TSource, int, CancellationToken, Task> selector)
         {
             return source.SelectMany(async (x, i, token) => { await selector(x,i, token); return x; });
@@ -42,6 +55,12 @@ namespace ConsoleApp12
         public static IObservable<TSource> Tap<TSource>(this IObservable<TSource> source, Func<TSource, Task> selector)
         {
             return source.SelectMany(async x => { await selector(x); return x; });
+        }
+
+        //Needs all overloads from above
+        public static IObservable<TSource> Tap<TSource>(this IObservable<TSource> source, IEnumerable<Func<TSource, Task>> selectors)
+        {
+            return source.SelectMany(async x => { await Task.WhenAll(selectors.Select(f => f(x))); return x; });
         }
 
         public static IObservable<T> Trace<T>(this IObservable<T> source, Action<T> handler)

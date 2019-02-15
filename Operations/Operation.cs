@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Operations;
+using System;
 using System.Collections.Generic;
 using System.Reactive.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ConsoleApp12
+namespace Operations
 {
     public interface IOperation<out T>
     {
@@ -33,7 +34,34 @@ namespace ConsoleApp12
         {
             return new Operation<T>(async () => { await func(); return returnValue; });
         }
+
+        public static IOperation<T> Create<T>(Action<T> func, T flowthroughValue)
+        {
+            return new Operation<T>(() => { func(flowthroughValue); return flowthroughValue; });
+        }
+
+        public static IOperation<T> Create<T>(Func<T, Task> func, T flowthroughValue)
+        {
+            return new Operation<T>(async () => { await func(flowthroughValue); return flowthroughValue; });
+        }
+
+
+
+        public static IOperation<IResult<T>> CreateResult<T>(Func<Task<T>> func)
+            => Create(async () => await Result.FromInvocationAsync(func));
+        
+
+        public static IOperation<IResult<T>> CreateResult<T>(Func<T, Task> func, T flowthroughValue)
+            => Create(async () => await Result.FromInvocationAsync(func, flowthroughValue));
+        
+        public static IOperation<IResult<T>> CreateResult<T>(Func<T> func)
+            => Create(() => Result.FromInvocation(func));
+        
+
+        public static IOperation<IResult<T>> CreateResult<T>(Action<T> func, T flowthroughValue)
+            => Create(() => Result.FromInvocation(func, flowthroughValue));
     }
+
 
     public class Operation<T> : IOperation<T>
     {

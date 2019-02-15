@@ -12,7 +12,7 @@ namespace Operations
     }
     public interface IResult<T> : IResult
     {
-        T Value { get; }
+        new T Value { get; }
     }
 
     public interface IVoidResult : IResult<Void>

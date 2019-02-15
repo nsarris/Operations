@@ -5,6 +5,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
+using Void = Operations.Void;
 
 namespace ConsoleApp12
 {
@@ -53,6 +54,12 @@ namespace ConsoleApp12
                 .WithConsoleLogAndTrace("DAL Save");
         }
 
+        public IObservable<Void> Project(TEntity entity)
+        {
+            return Observable.FromAsync(async () => { await ProjectAsync(entity); return Void.Value; })
+                .WithConsoleLogAndTrace("DAL Save");
+        }
+
         public IOperation<TEntity> CreateNewOperation()
         {
             return Operation.Create(CreateNewAsync)
@@ -65,6 +72,12 @@ namespace ConsoleApp12
                 .WithConsoleLogAndTrace("DAL Save");
         }
 
+        public IOperation<Void> ProjectOperation(TEntity entity)
+        {
+            return Operation.Create(() => ProjectAsync(entity))
+                .WithConsoleLogAndTrace("DAL Save");
+        }
+
         public IOperation<IResult<TEntity>> CreateNewResult()
         {
             return Operation.CreateResult(CreateNewAsync)
@@ -74,6 +87,12 @@ namespace ConsoleApp12
         public IOperation<IResult<TEntity>> SaveResult(TEntity entity)
         {
             return Operation.CreateResult(SaveAsync, entity)
+                .WithConsoleLogAndTrace("DAL Save");
+        }
+
+        public IOperation<IVoidResult> ProjectResult(TEntity entity)
+        {
+            return Operation.CreateResult(() => ProjectAsync(entity))
                 .WithConsoleLogAndTrace("DAL Save");
         }
     }
@@ -100,6 +119,7 @@ namespace ConsoleApp12
                     x.Name = name;
                 })
                 .Tap(repo.SaveAsync)
+                .Tap(repo.ProjectAsync)
                 //.Catch((Exception e) =>
                 //{
                 //    Console.WriteLine("Exception caught and handled at business level: " + e.Message);
@@ -120,6 +140,7 @@ namespace ConsoleApp12
                     x.Name = name;
                 })
                 .ContinueWith(repo.SaveAsync)
+                .ContinueWith(repo.ProjectAsync)
                 //.Catch((Exception e) =>
                 //{
                 //    Console.WriteLine("Exception caught and handled at business level: " + e.Message);
@@ -142,6 +163,7 @@ namespace ConsoleApp12
                     x.Value.Name = name;
                 })
                 .ContinueWith(repo.SaveAsync)
+                .ContinueWith(repo.ProjectAsync)
                 //.Catch((Exception e) =>
                 //{
                 //    Console.WriteLine("Exception caught and handled at business level: " + e.Message);

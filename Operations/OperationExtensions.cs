@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Reactive.Joins;
 using System.Reactive.Linq;
 using System.Threading;
@@ -11,7 +12,7 @@ namespace Operations
         public static IOperation<T> WithConsoleLogAndTrace<T>(this IOperation<T> opeartion, string tag)
         {
             return new Operation<T>(opeartion.AsObservable().Do(
-                onNext: x => Console.WriteLine($"[TRACE]{tag}, Value = {x}"),
+                onNext: x => Console.WriteLine($"[TRACE]{tag}, Value = {JsonConvert.SerializeObject(x is IResult result ? result.Value : x)}"),
                 onError: ex => Console.WriteLine($"[LOG]{tag}, Exception = {ex.Message}")));
         }
 
@@ -100,6 +101,11 @@ namespace Operations
             return new Operation<IResult<T>>(source.AsObservable().Tap(x => Operation.CreateResult(selector, x.Value)));
         }
 
+        public static IOperation<IResult<T>> ContinueWith<T>(this IOperation<IResult<T>> source, Action selector)
+        {
+            return new Operation<IResult<T>>(source.AsObservable().Tap(x => Operation.CreateResult(selector, x.Value)));
+        }
+
         public static IOperation<IResult<T>> ContinueWith<T>(this IOperation<IResult<T>> source, Func<T, Task> selector)
         {
             return new Operation<IResult<T>>(source.AsObservable().Tap(x => Operation.CreateResult(selector, x.Value)));
@@ -146,6 +152,20 @@ namespace Operations
             where TException : Exception
         {
             return new Operation<TSource>(source.AsObservable().Catch(handler));
+        }
+
+        public static IOperation<IVoidResult> Catch<TException>(this IOperation<IVoidResult> source, Func<TException, IVoidResult> handler)
+            where TException : Exception
+        {
+            return new Operation<IVoidResult>(
+                source.AsObservable().Catch((TException e) => Observable.Return(handler(e))));
+        }
+
+        public static IOperation<IResult<TSource>> Catch<TSource, TException>(this IOperation<IResult<TSource>> source, Func<TException, IResult<TSource>> handler)
+            where TException : Exception
+        {
+            return new Operation<IResult<TSource>>(
+                source.AsObservable().Catch((TException e) => Observable.Return(handler(e))));
         }
 
         public static Task<T> ExecuteAsync<T>(this IOperation<T> operation)

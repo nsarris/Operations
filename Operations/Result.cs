@@ -5,15 +5,25 @@ using System.Threading.Tasks;
 
 namespace Operations
 {
-    public interface IResult<T>
+    public interface IResult
+    {
+        object Value { get; }
+        Exception Exception { get; }
+    }
+    public interface IResult<T> : IResult
     {
         T Value { get; }
+    }
 
-        Exception Exception { get; }
+    public interface IVoidResult : IResult<Void>
+    {
+        
     }
 
     public class Result<T> : IResult<T>
     {
+        object IResult.Value => Value;
+
         public Result(T value)
         {
             Value = value;
@@ -27,12 +37,12 @@ namespace Operations
         public T Value { get; }
 
         public Exception Exception { get; }
-
-
     }
 
-    public class Result : IResult<Void>
+    public class Result : IVoidResult
     {
+        object IResult.Value => Value;
+
         public Void Value => Void.Value;
 
         public Exception Exception { get; }
@@ -47,22 +57,22 @@ namespace Operations
             Exception = exception;
         }
 
-        public static Result<T> Success<T>(T result)
+        public static IResult<T> Success<T>(T result)
         {
             return new Result<T>(result);
         }
 
-        public static Result Success()
+        public static IVoidResult Success()
         {
             return new Result();
         }
 
-        public static Result Fail(Exception e)
+        public static IVoidResult Fail(Exception e)
         {
             return new Result(e);
         }
 
-        public static Result<T> Fail<T>(Exception e)
+        public static IResult<T> Fail<T>(Exception e)
         {
             return new Result<T>(e);
         }
@@ -85,6 +95,45 @@ namespace Operations
             {
                 await func(flowthroughValue);
                 return Success(flowthroughValue);
+            }
+            catch (Exception e)
+            {
+                return Fail<T>(e);
+            }
+        }
+
+        public async static Task<IVoidResult> FromInvocationAsync(Func<Task> func)
+        {
+            try
+            {
+                await func();
+                return Success();
+            }
+            catch (Exception e)
+            {
+                return Fail(e);
+            }
+        }
+
+        public static IVoidResult FromInvocation(Action action)
+        {
+            try
+            {
+                action();
+                return Success();
+            }
+            catch (Exception e)
+            {
+                return Fail(e);
+            }
+        }
+
+        public static IResult<T> FromInvocation<T>(Action action, T flowthroughResult)
+        {
+            try
+            {
+                action();
+                return Success(flowthroughResult);
             }
             catch (Exception e)
             {

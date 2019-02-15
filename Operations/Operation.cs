@@ -25,14 +25,20 @@ namespace Operations
             return new Operation<T>(func);
         }
 
-        public static IOperation<T> Create<T>(Action func, T returnValue)
+        
+        public static IOperation<T> Create<T>(Action func, T flowthroughValue)
         {
-            return new Operation<T>(() => { func(); return returnValue; });
+            return new Operation<T>(() => { func(); return flowthroughValue; });
         }
 
-        public static IOperation<T> Create<T>(Func<Task> func, T returnValue)
+        public static IOperation<T> Create<T>(Func<Task> func, T flowthroughValue)
         {
-            return new Operation<T>(async () => { await func(); return returnValue; });
+            return new Operation<T>(async () => { await func(); return flowthroughValue; });
+        }
+
+        public static IOperation<Void> Create(Func<Task> func)
+        {
+            return new Operation<Void>(async () => { await func(); return Void.Value; });
         }
 
         public static IOperation<T> Create<T>(Action<T> func, T flowthroughValue)
@@ -49,14 +55,21 @@ namespace Operations
 
         public static IOperation<IResult<T>> CreateResult<T>(Func<Task<T>> func)
             => Create(async () => await Result.FromInvocationAsync(func));
-        
+
+        public static IOperation<IVoidResult> CreateResult(Func<Task> func)
+            => Create(async () => await Result.FromInvocationAsync(func));
 
         public static IOperation<IResult<T>> CreateResult<T>(Func<T, Task> func, T flowthroughValue)
             => Create(async () => await Result.FromInvocationAsync(func, flowthroughValue));
         
         public static IOperation<IResult<T>> CreateResult<T>(Func<T> func)
             => Create(() => Result.FromInvocation(func));
-        
+
+        public static IOperation<IVoidResult> CreateResult(Action action)
+            => Create(() => Result.FromInvocation(action));
+
+        public static IOperation<IResult<T>> CreateResult<T>(Action action, T flowthroughValue)
+            => Create(() => Result.FromInvocation(action, flowthroughValue));
 
         public static IOperation<IResult<T>> CreateResult<T>(Action<T> func, T flowthroughValue)
             => Create(() => Result.FromInvocation(func, flowthroughValue));

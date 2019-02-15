@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Operations
 {
@@ -12,7 +13,7 @@ namespace Operations
         public static IObservable<T> WithConsoleLogAndTrace<T>(this IObservable<T> observable, string tag)
         {
             return observable.Do(
-                onNext: x => Console.WriteLine($"[TRACE]{tag}, Value = {x}"),
+                onNext: x => Console.WriteLine($"[TRACE]{tag}, Value = {JsonConvert.SerializeObject(x is IResult result ? result.Value : x)}"),
                 onError: ex => Console.WriteLine($"[LOG]{tag}, Exception = {ex.Message}"));
         }
 

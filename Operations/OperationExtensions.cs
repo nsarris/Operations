@@ -91,7 +91,15 @@ namespace Operations
             return new Operation<TResult>(source.AsObservable().SelectMany(selector));
         }
 
+        public static IOperation<TResult> ContinueWith<TSource, TResult>(this IOperation<TSource> source, IOperation<TResult> operation)
+        {
+            return new Operation<TResult>(source.AsObservable().SelectMany(async (_) => await operation.ExecuteAsync()));
+        }
 
+        public static IOperation<TResult> ContinueWith<TSource, TResult>(this IOperation<TSource> source, Func<TSource, IOperation<TResult>> operation)
+        {
+            return new Operation<TResult>(source.AsObservable().SelectMany(async (x) => await operation(x).ExecuteAsync()));
+        }
 
 
         #region Result continuations
@@ -148,7 +156,7 @@ namespace Operations
             return new Operation<T>(source.AsObservable().Log(handler));
         }
 
-        public static IOperation<TSource> Catch<TSource, TException>(this IOperation<TSource> source, Func<TException, IObservable<TSource>> handler) 
+        public static IOperation<TSource> Catch<TSource, TException>(this IOperation<TSource> source, Func<TException, IObservable<TSource>> handler)
             where TException : Exception
         {
             return new Operation<TSource>(source.AsObservable().Catch(handler));
@@ -176,5 +184,12 @@ namespace Operations
         {
             return ((Operation<T>)operation).ExecuteAsync(cancellationToken);
         }
+
+        public static IOperation<T> Retry<T>(this IOperation<T> source, int retryCount)
+            => new Operation<T>(source.AsObservable().Retry(retryCount));
+
+        public static IOperation<T> Retry<T>(this IOperation<T> source, IRetryStrategy retryStrategy)
+            => new Operation<T>(retryStrategy.Apply(source.AsObservable()));
+
     }
 }

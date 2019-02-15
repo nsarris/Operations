@@ -166,14 +166,16 @@ namespace ConsoleApp12
                 })
                 .ContinueWith(repo.SaveAsync)
                 .ContinueWith(repo.ProjectAsync)
-                .ContinueWith(x =>
-                {
-                    if (DateTime.IsLeapYear(2001))
-                        return Result.Success(x);
-                    else
-                        throw new InvalidOperationException();
-                })
-                
+                .ContinueWith(x => Operation.Create(() =>
+                    {
+                    
+                        if (DateTime.IsLeapYear(2001))
+                            return Result.Success(x);
+                        else
+                            throw new InvalidOperationException();
+                    })
+                    .Log(e => Console.WriteLine("Failed with retry policy"))
+                    .Retry(new ExponentialBackoffRetryStrategy(3, 2, (e,i) => Console.WriteLine($"Failed with {e.Message} , retrying {i}"))))
                 //.Catch((Exception e) =>
                 //{
                 //    Console.WriteLine("Exception caught and handled at business level: " + e.Message);
